@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -9,6 +9,9 @@ import {
   Modal,
   Pressable,
   Platform,
+  Animated,
+  ToastAndroid,
+  Alert,
 } from "react-native";
 import {
   GestureDetector,
@@ -22,6 +25,7 @@ import Reanimated, {
 } from "react-native-reanimated";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as Sharing from "expo-sharing";
 import { capturedPhotos } from "./index";
 
 const { width, height } = Dimensions.get("window");
@@ -29,7 +33,60 @@ const GRID_PADDING = 2;
 const COLS = 3;
 const ITEM_SIZE = (width - GRID_PADDING * (COLS + 1)) / COLS;
 
-// ─── Zoomable image ───────────────────────────────────────────────────────────
+function useToast() {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const [message, setMessage] = useState("");
+
+  const show = (msg: string) => {
+    if (Platform.OS === "android") {
+      ToastAndroid.show(msg, ToastAndroid.SHORT);
+      return;
+    }
+    setMessage(msg);
+    Animated.sequence([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const ToastComponent = () => (
+    <Animated.View style={[styles.toast, { opacity }]} pointerEvents="none">
+      <Text style={styles.toastText}>{message}</Text>
+    </Animated.View>
+  );
+
+  return { show, ToastComponent };
+}
+
+async function sharePhoto(uri: string): Promise<boolean> {
+  try {
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert(
+        "Sharing unavailable",
+        "Sharing is not supported on this device.",
+      );
+      return false;
+    }
+    await Sharing.shareAsync(uri, {
+      mimeType: "image/jpeg",
+      dialogTitle: "Share photo",
+      UTI: "public.jpeg",
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function ZoomableImage({ uri }: { uri: string }) {
   const scale = useSharedValue(1);
@@ -57,12 +114,10 @@ function ZoomableImage({ uri }: { uri: string }) {
       scale.value = Math.max(1, savedScale.value * e.scale);
     })
     .onEnd(() => {
-      if (scale.value <= 1) {
-        resetZoom();
-      } else {
-        savedScale.value = scale.value;
-      }
+      if (scale.value <= 1) resetZoom();
+      else savedScale.value = scale.value;
     });
+
   const pan = Gesture.Pan()
     .onUpdate((e) => {
       translateX.value = savedX.value + e.translationX;
@@ -106,11 +161,69 @@ function ZoomableImage({ uri }: { uri: string }) {
   );
 }
 
-// ─── Gallery screen ───────────────────────────────────────────────────────────
+function GridItem({
+  uri,
+  index,
+  onPress,
+  onLongPress,
+}: {
+  uri: string;
+  index: number;
+  onPress: () => void;
+  onLongPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+
+  const handleLongPress = () => {
+    Animated.sequence([
+      Animated.timing(scale, {
+        toValue: 0.92,
+        duration: 80,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 1,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    onLongPress();
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.gridItem}
+      onPress={onPress}
+      onLongPress={handleLongPress}
+      delayLongPress={350}
+      activeOpacity={0.85}
+    >
+      <Animated.View style={{ transform: [{ scale }], flex: 1 }}>
+        <Reanimated.Image
+          source={{ uri }}
+          style={styles.gridImage}
+          resizeMode="cover"
+        />
+        <View style={styles.gridIndex}>
+          <Text style={styles.gridIndexText}>{index + 1}</Text>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
 
 export default function GalleryScreen() {
   const photos = capturedPhotos;
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [sharingIndex, setSharingIndex] = useState<number | null>(null);
+  const { show: showToast, ToastComponent } = useToast();
+
+  const handleShare = async (index: number) => {
+    setSharingIndex(index);
+    const ok = await sharePhoto(photos[index]);
+    setSharingIndex(null);
+    if (!ok) showToast("Could not share photo");
+  };
 
   const openPhoto = (index: number) => setSelectedIndex(index);
   const closePhoto = () => setSelectedIndex(null);
@@ -125,23 +238,17 @@ export default function GalleryScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: string; index: number }) => (
-      <TouchableOpacity
-        style={styles.gridItem}
+      <GridItem
+        uri={item}
+        index={index}
         onPress={() => openPhoto(index)}
-        activeOpacity={0.85}
-      >
-        <Reanimated.Image
-          source={{ uri: item }}
-          style={styles.gridImage}
-          resizeMode="cover"
-        />
-        <View style={styles.gridIndex}>
-          <Text style={styles.gridIndexText}>{index + 1}</Text>
-        </View>
-      </TouchableOpacity>
+        onLongPress={() => handleShare(index)}
+      />
     ),
     [],
   );
+
+  const isSharing = selectedIndex !== null && sharingIndex === selectedIndex;
 
   return (
     <View style={styles.container}>
@@ -173,15 +280,22 @@ export default function GalleryScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
-          data={photos}
-          renderItem={renderItem}
-          keyExtractor={(_, i) => i.toString()}
-          numColumns={COLS}
-          contentContainerStyle={styles.grid}
-          columnWrapperStyle={styles.row}
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <View style={styles.hintBar}>
+            <Text style={styles.hintText}>
+              LONG-PRESS TO SHARE · TAP TO VIEW
+            </Text>
+          </View>
+          <FlatList
+            data={photos}
+            renderItem={renderItem}
+            keyExtractor={(_, i) => i.toString()}
+            numColumns={COLS}
+            contentContainerStyle={styles.grid}
+            columnWrapperStyle={styles.row}
+            showsVerticalScrollIndicator={false}
+          />
+        </>
       )}
 
       <Modal
@@ -197,7 +311,6 @@ export default function GalleryScreen() {
 
             {selectedIndex !== null && (
               <>
-                {/* key forces remount (and zoom reset) on photo change */}
                 <ZoomableImage
                   key={selectedIndex}
                   uri={photos[selectedIndex]}
@@ -208,6 +321,23 @@ export default function GalleryScreen() {
                   onPress={closePhoto}
                 >
                   <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.shareButton,
+                    isSharing && styles.shareButtonSharing,
+                  ]}
+                  onPress={() => handleShare(selectedIndex)}
+                  disabled={isSharing}
+                  activeOpacity={0.75}
+                >
+                  <Text style={styles.shareButtonIcon}>
+                    {isSharing ? "…" : "↑"}
+                  </Text>
+                  <Text style={styles.shareButtonLabel}>
+                    {isSharing ? "SHARING" : "SHARE"}
+                  </Text>
                 </TouchableOpacity>
 
                 <View style={styles.modalNav}>
@@ -241,11 +371,11 @@ export default function GalleryScreen() {
           </View>
         </GestureHandlerRootView>
       </Modal>
+
+      <ToastComponent />
     </View>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#0a0a0a" },
@@ -285,6 +415,18 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 2,
     marginTop: 2,
+  },
+  hintBar: {
+    paddingVertical: 8,
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.05)",
+  },
+  hintText: {
+    color: "rgba(255,255,255,0.25)",
+    fontSize: 9,
+    fontWeight: "700",
+    letterSpacing: 2,
   },
   grid: { padding: GRID_PADDING, paddingTop: GRID_PADDING * 2 },
   row: { gap: GRID_PADDING, marginBottom: GRID_PADDING },
@@ -350,6 +492,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeButtonText: { color: "#fff", fontSize: 16 },
+  shareButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 60 : 44,
+    left: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(240,192,64,0.18)",
+    borderWidth: 1,
+    borderColor: "#f0c040",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  shareButtonSharing: { opacity: 0.6 },
+  shareButtonIcon: { color: "#f0c040", fontSize: 14, fontWeight: "800" },
+  shareButtonLabel: {
+    color: "#f0c040",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.5,
+  },
   modalNav: {
     position: "absolute",
     bottom: 60,
@@ -377,5 +541,22 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     minWidth: 70,
     textAlign: "center",
+  },
+  toast: {
+    position: "absolute",
+    bottom: 120,
+    alignSelf: "center",
+    backgroundColor: "rgba(30,30,30,0.92)",
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  toastText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
 });

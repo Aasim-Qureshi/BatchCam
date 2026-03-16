@@ -10,17 +10,30 @@
     "ios": {
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "BatchCam needs camera access to take photos in batches."
+        "NSCameraUsageDescription": "BatchCam needs camera access to take photos in batches.",
+        "NSPhotoLibraryAddUsageDescription": "BatchCam needs access to save photos to your library."
       }
     },
     "android": {
-      "permissions": ["android.permission.CAMERA"]
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "plugins": [
       [
         "expo-camera",
         {
           "cameraPermission": "BatchCam needs camera access to take photos in batches."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "BatchCam needs access to save photos to your library.",
+          "savePhotosPermission": "BatchCam needs access to save photos to your library.",
+          "isAccessMediaLocationEnabled": false
         }
       ]
     ]

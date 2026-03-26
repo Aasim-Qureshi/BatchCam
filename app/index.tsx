@@ -1,4 +1,9 @@
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
+import {
+  useCameraDevice,
+  useCameraFormat,
+  useCameraPermission,
+  Camera,
+} from "react-native-vision-camera";
 import { useRef, useState, useCallback } from "react";
 import {
   StyleSheet,
@@ -8,22 +13,21 @@ import {
   Pressable,
   Dimensions,
 } from "react-native";
-import { GestureDetector, Gesture } from "react-native-gesture-handler";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Reanimated, {
   useSharedValue,
   useAnimatedStyle,
-  useAnimatedProps,
   withTiming,
   withSpring,
   runOnJS,
+  useAnimatedProps,
 } from "react-native-reanimated";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 const { width, height } = Dimensions.get("window");
 
-// Wrap CameraView so Reanimated can drive its props on the UI thread
-const AnimatedCameraView = Reanimated.createAnimatedComponent(CameraView);
+const AnimatedCamera = Reanimated.createAnimatedComponent(Camera);
 
 export let capturedPhotos: string[] = [];
 export const resetPhotos = () => {
@@ -31,13 +35,24 @@ export const resetPhotos = () => {
 };
 
 export default function CameraScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [facing] = useState<CameraType>("back");
+  const { hasPermission, requestPermission } = useCameraPermission();
   const [photoCount, setPhotoCount] = useState(0);
-  const cameraRef = useRef<CameraView>(null);
+  const cameraRef = useRef<Camera>(null);
 
-  const zoom = useSharedValue(0);
-  const savedZoom = useSharedValue(0);
+  // Always use the back camera
+  const device = useCameraDevice("back");
+
+  // Request the highest photo resolution available on the device.
+  // photoResolution: "max" tells Vision Camera to pick the format with the
+  // largest pixel count — critical for text legibility on price tags / serials.
+  // We also prefer higher ISO range so the camera can expose well in dim aisles.
+  const format = useCameraFormat(device, [
+    { photoResolution: "max" },
+    { autoFocusSystem: "phase-detection" }, // fastest AF for small text
+  ]);
+
+  const zoom = useSharedValue(device?.neutralZoom ?? 1);
+  const savedZoom = useSharedValue(device?.neutralZoom ?? 1);
 
   const shutterScale = useSharedValue(1);
   const flashOpacity = useSharedValue(0);
@@ -54,13 +69,17 @@ export default function CameraScreen() {
     });
 
     try {
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 1,
-        exif: false,
+      // qualityPrioritization: "quality" tells the pipeline to favour image
+      // fidelity over capture speed — exactly right for reading text.
+      const photo = await cameraRef.current.takePhoto({
+        qualityPrioritization: "quality",
+        enableShutterSound: false,
       });
 
-      if (photo?.uri) {
-        capturedPhotos = [...capturedPhotos, photo.uri];
+      if (photo?.path) {
+        // Vision Camera returns a bare file path; prefix with file:// for RN Image
+        const uri = `file://${photo.path}`;
+        capturedPhotos = [...capturedPhotos, uri];
         const newCount = capturedPhotos.length;
         counterScale.value = withSpring(1.4, { damping: 8 }, () => {
           counterScale.value = withSpring(1, { damping: 10 });
@@ -72,17 +91,23 @@ export default function CameraScreen() {
     }
   }, []);
 
+  // Pinch-to-zoom — clamp between minZoom and maxZoom exposed by the device
+  const minZoom = device?.minZoom ?? 1;
+  const maxZoom = Math.min(device?.maxZoom ?? 1, 8); // cap at 8× for UX
+
   const pinchGesture = Gesture.Pinch()
     .onUpdate((e) => {
-      const delta = (e.scale - 1) * 0.3;
-      const newZoom = Math.min(1, Math.max(0, savedZoom.value + delta));
+      const delta = (e.scale - 1) * 0.4;
+      const newZoom = Math.min(
+        maxZoom,
+        Math.max(minZoom, savedZoom.value + delta),
+      );
       zoom.value = newZoom;
     })
     .onEnd(() => {
       savedZoom.value = zoom.value;
     });
 
-  // Drive zoom on the UI thread via animated props — avoids reading .value during render
   const animatedCameraProps = useAnimatedProps(() => ({
     zoom: zoom.value,
   }));
@@ -106,9 +131,7 @@ export default function CameraScreen() {
     setPhotoCount(0);
   };
 
-  if (!permission) return <View style={styles.container} />;
-
-  if (!permission.granted) {
+  if (!hasPermission) {
     return (
       <View style={styles.permissionContainer}>
         <Text style={styles.permissionTitle}>Camera Access</Text>
@@ -125,17 +148,33 @@ export default function CameraScreen() {
     );
   }
 
+  if (!device) {
+    return (
+      <View style={styles.permissionContainer}>
+        <Text style={styles.permissionTitle}>No Camera Found</Text>
+        <Text style={styles.permissionSubtitle}>
+          Could not access the back camera on this device.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
 
       <GestureDetector gesture={pinchGesture}>
         <Reanimated.View style={{ flex: 1 }}>
-          <AnimatedCameraView
+          <AnimatedCamera
             ref={cameraRef}
             style={StyleSheet.absoluteFill}
-            facing={facing}
+            device={device}
+            format={format}
+            isActive={true}
+            photo={true}
             animatedProps={animatedCameraProps}
+            // enableHighQualityPhotos ensures the full-res pipeline is active on iOS
+            enableHighQualityPhotos={true}
           />
         </Reanimated.View>
       </GestureDetector>

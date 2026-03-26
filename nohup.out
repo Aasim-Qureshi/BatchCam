@@ -1,0 +1,40 @@
+[91m[CRITICAL 12:59:41.376408][0m [Wnck] wnck_set_client_type: changing the client type is not supported.
+[93m[WARN 12:59:41.438465][0m [Preferences:192] '/usr/share/plank/themes/Transparent/dock.theme' is read-only!
+[93m[WARN 12:59:41.439198][0m [Preferences:378] Missing key 'OuterStrokeColor' for group 'PlankTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439212][0m [Preferences:378] Missing key 'FillStartColor' for group 'PlankTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439222][0m [Preferences:378] Missing key 'FillEndColor' for group 'PlankTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439232][0m [Preferences:378] Missing key 'InnerStrokeColor' for group 'PlankTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439242][0m [Preferences:378] Missing key 'HorizPadding' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439274][0m [Preferences:378] Missing key 'ItemPadding' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439284][0m [Preferences:378] Missing key 'IndicatorSize' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439294][0m [Preferences:378] Missing key 'IconShadowSize' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439304][0m [Preferences:378] Missing key 'UrgentBounceHeight' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439314][0m [Preferences:378] Missing key 'LaunchBounceHeight' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439323][0m [Preferences:378] Missing key 'FadeOpacity' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439333][0m [Preferences:378] Missing key 'ClickTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439342][0m [Preferences:378] Missing key 'UrgentBounceTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439352][0m [Preferences:378] Missing key 'LaunchBounceTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439362][0m [Preferences:378] Missing key 'ActiveTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439371][0m [Preferences:378] Missing key 'SlideTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439381][0m [Preferences:378] Missing key 'FadeTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439391][0m [Preferences:378] Missing key 'HideTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439400][0m [Preferences:378] Missing key 'GlowSize' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439410][0m [Preferences:378] Missing key 'GlowTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - usinGtk-Message: 12:59:48.335: Failed to load module "xapp-gtk3-module"
+Gtk-Message: 12:59:50.202: Failed to load module "xapp-gtk3-module"
+[Parent 2, Main Thread] WARNING: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: org.freedesktop.DBus.Error.ServiceUnknown
+: 'glib warning', file /home/ubuntu/actions-runner/_work/desktop/desktop/engine/toolkit/xre/nsSigHandlers.cpp:201
+
+** (zen:2): WARNING **: 12:59:50.274: Failed to enumerate devices of org.freedesktop.UPower: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: org.freedesktop.DBus.Error.ServiceUnknown
+
+g default value
+[93m[WARN 12:59:41.439454][0m [Preferences:378] Missing key 'GlowPulseTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439464][0m [Preferences:378] Missing key 'UrgentHueShift' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439474][0m [Preferences:378] Missing key 'ItemMoveTime' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439483][0m [Preferences:378] Missing key 'CascadeHide' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.439493][0m [Preferences:378] Missing key 'BadgeColor' for group 'PlankDockTheme' in preferences file '/usr/share/plank/themes/Transparent/dock.theme' - using default value
+[93m[WARN 12:59:41.821912][0m Creating surface took WAY TOO LONG (229ms), enabled downscaling for this cache!
+[91m[CRITICAL 13:21:20.392980][0m [DockWindow:298] Retry #1 update_size_and_position() to force requested values!
+[91m[CRITICAL 13:21:20.393442][0m [DockWindow:298] Retry #2 update_size_and_position() to force requested values!
+[91m[CRITICAL 15:08:36.521270][0m [DockWindow:298] Retry #1 update_size_and_position() to force requested values!
+[91m[CRITICAL 15:08:36.522469][0m [DockWindow:298] Retry #2 update_size_and_position() to force requested values!
+[93m[WARN 15:09:02.622962][0m [AbstractMain:42] Caught signal (15), exiting

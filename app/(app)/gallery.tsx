@@ -28,7 +28,7 @@ import Reanimated, {
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as Sharing from "expo-sharing";
-import { capturedPhotos } from "./index";
+import { capturedPhotos } from "./camera";
 
 const { width, height } = Dimensions.get("window");
 const GRID_PADDING = 2;

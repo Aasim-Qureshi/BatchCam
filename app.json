@@ -51,7 +51,8 @@
           "isAccessMediaLocationEnabled": false
         }
       ],
-      "react-native-vision-camera"
+      "react-native-vision-camera",
+      "expo-secure-store"
     ]
   }
 }
